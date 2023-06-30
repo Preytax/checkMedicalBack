@@ -54,18 +54,18 @@ public class ctl_persona {
             !persona.getTipoDocumento().equals("")      && !persona.getTipoDocumento().isEmpty()    &&
             !persona.getNroDocumento().equals("")       && !persona.getNroDocumento().isEmpty()     &&
             !persona.getFechaNacimiento().equals("")    && !persona.getFechaNacimiento().isEmpty()  &&
-        !persona.getCorreo().equals("")                 && !persona.getCorreo().isEmpty()           &&
+            !persona.getCorreo().equals("")             && !persona.getCorreo().isEmpty()           &&
             !persona.getPassword().equals("")           && !persona.getPassword().isEmpty()
             ) 
         {
             mensaje = "ER|No se pudo registrar a la persona.";
 
-            if(service.confirmarCorreo(persona.getCorreo()) == false){
+            /*if(service.confirmarCorreo(persona.getCorreo()) == false){
                 return "ER|El correo ya esta registrado.";
             }
             else if(service.confirmarNroDocumento(persona.getNroDocumento()) == false){
                 return "ER|El Nro de docuemento ya esta registrado.";
-            }
+            }*/
 
             persona.setUsuarioRegistra(persona.getId());
             persona.setEstado(1);

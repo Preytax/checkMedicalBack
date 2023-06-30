@@ -31,6 +31,10 @@ public class mdl_persona {
     private int idSede;
     
     @Getter @Setter
+    @Column(name = "ID_AMBIENTE")
+    private int idAmbiente;
+    
+    @Getter @Setter
     @Column(name = "CORREO")
     private String correo;
 
@@ -84,7 +88,7 @@ public class mdl_persona {
 
     @Getter @Setter
     @Column(name = "USUARIO_MODIFICA")
-    private int usuarioModifica;
+    private Integer usuarioModifica;
 
     @Getter @Setter
     @Column(name = "FECHA_REGISTRA")
