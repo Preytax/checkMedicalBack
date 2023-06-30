@@ -13,6 +13,21 @@ public class svc_persona {
     @Autowired
     itf_rct_persona repository;
 
+    public Boolean deshabilitarPersona(int id) {
+        repository.deshabilitarPersona(id);
+        return true;
+    }
+
+    public Boolean habilitarPersona(int id) {
+        repository.habilitarPersona(id);
+        return true;
+    }
+
+    public Boolean EliminarPersona(int id) {
+        repository.eliminarPersona(id);
+        return true;
+    }
+    
     public List<mdl_persona> singIn(String correo, String password) {
         return repository.findByCorreoAndPasswordAndEstado(correo, password, 1);
     }
