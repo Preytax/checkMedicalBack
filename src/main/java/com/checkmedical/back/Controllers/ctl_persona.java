@@ -160,7 +160,6 @@ public class ctl_persona {
             }
 
             // Estilo para la cabecera
-
             // Estilo para datos de edicion en la cabecera
             CellStyle styleheaderEditable = workbook.createCellStyle();
 
@@ -236,7 +235,7 @@ public class ctl_persona {
             int rowCount = sheet.getPhysicalNumberOfRows(); // Obtiene el número total de filas físicas en la hoja
 
             // Iterar sobre cada fila y verificar si contiene datos escritos
-            for (int i = 1; i < rowCount; i++) {
+            for (int i = 1; i < rowCount+1; i++) {
                 Row row = sheet.getRow(i);
                 if (row != null && !isEmptyRow(row)) {
                     mdl_persona persona = new mdl_persona();

@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import org.apache.poi.ss.usermodel.*;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -36,10 +38,10 @@ public class ctl_recordatorio {
     @Autowired
     svc_recordatorio service;
 
-    @GetMapping("/getRecordatorios")
+    @GetMapping("/getRecordatorios/{estado}")
     @ResponseStatus(HttpStatus.OK)
-    List<mdl_recordatorio> getRecordatorios() {
-        return service.getRecordatorios();
+    List<mdl_recordatorio> getRecordatorios(@PathVariable int estado) {
+        return service.getRecordatorios(estado);
     }
 
     @GetMapping("/getRecordatorioById/{id}")
@@ -60,7 +62,7 @@ public class ctl_recordatorio {
         String mensaje = "ER|Existe un error interno y no pudo registrarse.";
 
         if (
-            recordatorio.getIdActividad() != 0 &&
+            recordatorio.getIdClinica() != 0 &&
             !recordatorio.getFechaInicio().equals("") &&
             !recordatorio.getFechaFin().equals("") &&
             recordatorio.getIdPersona() != 0
@@ -74,6 +76,24 @@ public class ctl_recordatorio {
 
             if (service.saveRecordatorio(recordatorio)) {
                 mensaje = "OK|Se registro el recordatorio con exito.";
+            }
+        }
+
+        return mensaje;
+    }
+
+    @PutMapping("/eliminarRecordatorio")
+    @ResponseStatus(HttpStatus.OK)
+    String EliminarRecordatorio(@RequestBody mdl_recordatorio recordatorio) {
+        String mensaje = "ER|Existe un error interno y no pudo eliminar.";
+        boolean confirmacion = false;
+        if (recordatorio.getId() != 0) {
+            mensaje = "ER|No se pudo eliminar la información.";
+
+            confirmacion = service.eliminarRecordatorio(recordatorio.getId());
+
+            if (confirmacion) {
+                mensaje = "OK|Se elimino el recordatorio.";
             }
         }
 
@@ -95,8 +115,11 @@ public class ctl_recordatorio {
             headerRow.createCell(0).setCellValue("ID");
             headerRow.createCell(1).setCellValue("RECORDATORIO");
             headerRow.createCell(2).setCellValue("ID PERSONA");
-            headerRow.createCell(3).setCellValue("F. INICIO");
-            headerRow.createCell(4).setCellValue("F. FINAL");
+            headerRow.createCell(3).setCellValue("ID CLINICA");
+            headerRow.createCell(4).setCellValue("AMBIENTE");
+            headerRow.createCell(5).setCellValue("F. CITA");
+            headerRow.createCell(6).setCellValue("F. INICIO");
+            headerRow.createCell(7).setCellValue("F. FINAL");
 
             // Llena las filas con los datos de la entidad
             int rowNum = 1;
@@ -105,8 +128,11 @@ public class ctl_recordatorio {
                 row.createCell(0).setCellValue(recordatorio.getId());
                 row.createCell(1).setCellValue(recordatorio.getRecordatorio());
                 row.createCell(2).setCellValue(recordatorio.getIdPersona());
-                row.createCell(3).setCellValue(recordatorio.getFechaInicio());
-                row.createCell(4).setCellValue(recordatorio.getFechaFin());
+                row.createCell(3).setCellValue(recordatorio.getIdClinica());
+                row.createCell(4).setCellValue(recordatorio.getAmbiente());
+                row.createCell(5).setCellValue(recordatorio.getFechaCita());
+                row.createCell(6).setCellValue(recordatorio.getFechaInicio());
+                row.createCell(7).setCellValue(recordatorio.getFechaFin());
             }
 
             // Estilo para la cabecera
@@ -196,22 +222,17 @@ public class ctl_recordatorio {
 
                     recordatorio.setRecordatorio(row.getCell(1).getStringCellValue());
                     recordatorio.setIdPersona((int) row.getCell(2).getNumericCellValue());
-                    recordatorio.setFechaInicio(String.valueOf(row.getCell(3).getLocalDateTimeCellValue().toLocalDate()));
-                    recordatorio.setFechaFin(String.valueOf(row.getCell(4).getLocalDateTimeCellValue().toLocalDate()));
+                    recordatorio.setIdClinica((int) row.getCell(3).getNumericCellValue());
+                    recordatorio.setAmbiente(row.getCell(4).getStringCellValue());
+                    recordatorio.setFechaCita(row.getCell(5).getLocalDateTimeCellValue().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                    recordatorio.setFechaInicio(String.valueOf(row.getCell(6).getLocalDateTimeCellValue().toLocalDate()));
+                    recordatorio.setFechaFin(String.valueOf(row.getCell(7).getLocalDateTimeCellValue().toLocalDate()));
 
                     //Campos de auditoria
                     recordatorio.setUsuarioRegistra(recordatorio.getId());
                     recordatorio.setEstado(1);
                     recordatorio.setIpRegistra(recordatorio.capturarIp());
-
-                    // Asigna otros atributos de la entidad según los datos de las celdas
-                    System.out.println("esta es la recordatorio: "+recordatorio.getId());
-                    System.out.println("esta es la recordatorio: "+recordatorio.getRecordatorio());
-                    System.out.println("esta es la recordatorio: "+recordatorio.getIdPersona());
-                    System.out.println("esta es la recordatorio: "+recordatorio.getFechaInicio());
-                    System.out.println("esta es la recordatorio: "+recordatorio.getFechaFin());
                     
-
                     // Registrar recordatorio
                     service.saveRecordatorio(recordatorio);
                 }

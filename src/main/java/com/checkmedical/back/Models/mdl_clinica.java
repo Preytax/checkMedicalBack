@@ -1,5 +1,4 @@
 package com.checkmedical.back.Models;
-
 import java.net.InetAddress;
 import java.time.LocalDateTime;
 
@@ -15,10 +14,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name= "ckm_recordatorios")
+@Table(name= "ckm_clinicas")
 @AllArgsConstructor
 @NoArgsConstructor
-public class mdl_recordatorio {
+public class mdl_clinica {
     
     @Id
     @Column(name="ID")
@@ -26,45 +25,25 @@ public class mdl_recordatorio {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
+    @Column(name="CLINICA")
     @Getter @Setter
-    @Column(name = "RECORDATORIO")
-    private String recordatorio;
+    private String clinica;
 
+    @Column(name="DIRECCION")
     @Getter @Setter
-    @Column(name = "ID_PERSONA")
-    private int idPersona;
+    private String direccion;
 
+    @Column(name="ESTADO")
     @Getter @Setter
-    @Column(name = "ID_CLINICA")
-    private int idClinica;
-
-    @Getter @Setter
-    @Column(name = "AMBIENTE")
-    private String ambiente;
-
-    @Getter @Setter
-    @Column(name = "FECHA_CITA")
-    private String fechaCita;
-
-    @Getter @Setter
-    @Column(name = "FECHA_INICIO")
-    private String fechaInicio;
-
-    @Getter @Setter
-    @Column(name = "FECHA_FIN")
-    private String fechaFin;
-
-    @Getter @Setter
-    @Column(name = "ESTADO")
     private int estado;
 
+    @Column(name="USUARIO_REGISTRA")
     @Getter @Setter
-    @Column(name = "USUARIO_REGISTRA")
-    private int usuarioRegistra;
+    private int uduarioRegistra;
 
+    @Column(name="USUARIO_MODIFICA")
     @Getter @Setter
-    @Column(name = "USUARIO_MODIFICA")
-    private int usuarioModifica;
+    private Integer uduarioModifica;
 
     @Getter @Setter
     @Column(name = "FECHA_REGISTRA")
@@ -82,17 +61,15 @@ public class mdl_recordatorio {
     @Column(name = "IP_MODIFICA")
     private String ipModifica;
 
-
-    //Metodos
     public String capturarIp() {
-        String miIp = "";
+        String miVariable = "";
         try {
             InetAddress ip = InetAddress.getLocalHost();
-            miIp = ip.getHostAddress();
+            miVariable = ip.getHostAddress();
         } catch (Exception e) {
-            miIp = "0000000000";
+            miVariable = "0000000000";
         }
-        return miIp;
+        return miVariable;
     }    
 
     public String capturaraFecha(){

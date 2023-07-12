@@ -9,25 +9,26 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import com.checkmedical.back.Models.mdl_documento;
-import com.checkmedical.back.services.svc_documento;
+
+import com.checkmedical.back.Models.mdl_clinica;
+import com.checkmedical.back.services.svc_clinica;
 
 @Controller
 @RestController
-public class ctl_documento {
+public class ctl_clinica {
     
     @Autowired
-    svc_documento service;
+    svc_clinica service;
 
-    @GetMapping("/getDocumentos")
+    @GetMapping("/getClinicas")
     @ResponseStatus(HttpStatus.OK)
-    List<mdl_documento> getDocumentos() {
-        return service.getDocumentos();
+    List<mdl_clinica> getClinicas() {
+        return service.getClinicas();
     }
 
-    @GetMapping("/getDocumentoById/{id}")
+    @GetMapping("/getClinicaById/{id}")
     @ResponseStatus(HttpStatus.OK)
-    mdl_documento getDocumentoById(@PathVariable int id) {
-        return service.getDocumentoById(id);
+    mdl_clinica getClinicaById(@PathVariable int id) {
+        return service.getClinicaById(id);
     }
 }
