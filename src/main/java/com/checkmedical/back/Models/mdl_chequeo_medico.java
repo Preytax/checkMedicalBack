@@ -15,10 +15,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name= "ckm_recordatorios")
+@Table(name= "ckm_chequeo_medico")
 @AllArgsConstructor
 @NoArgsConstructor
-public class mdl_recordatorio {
+public class mdl_chequeo_medico {
     
     @Id
     @Column(name="ID")
@@ -26,29 +26,25 @@ public class mdl_recordatorio {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
+    @Column(name="ID_PERSONA")
     @Getter @Setter
-    @Column(name = "RECORDATORIO")
-    private String recordatorio;
-
-    @Getter @Setter
-    @Column(name = "ID_PERSONA")
     private int idPersona;
 
     @Getter @Setter
-    @Column(name = "ID_ACTIVIDAD")
-    private int idActividad;
+    @Column(name = "PDF")
+    private String pdf;
 
     @Getter @Setter
-    @Column(name = "FECHA_INICIO")
-    private String fechaInicio;
+    @Column(name = "RESULTADO")
+    private int resultado;
 
     @Getter @Setter
-    @Column(name = "FECHA_FIN")
-    private String fechaFin;
+    @Column(name = "FECHA_EMISION")
+    private String fechaEmision;
 
     @Getter @Setter
-    @Column(name = "ESTADO")
-    private int estado;
+    @Column(name = "FECHA_VENCIMIENTO")
+    private String fechaVencimiento;
 
     @Getter @Setter
     @Column(name = "USUARIO_REGISTRA")
@@ -56,7 +52,7 @@ public class mdl_recordatorio {
 
     @Getter @Setter
     @Column(name = "USUARIO_MODIFICA")
-    private int usuarioModifica;
+    private Integer usuarioModifica;
 
     @Getter @Setter
     @Column(name = "FECHA_REGISTRA")
@@ -74,17 +70,15 @@ public class mdl_recordatorio {
     @Column(name = "IP_MODIFICA")
     private String ipModifica;
 
-
-    //Metodos
     public String capturarIp() {
-        String miIp = "";
+        String miVariable = "";
         try {
             InetAddress ip = InetAddress.getLocalHost();
-            miIp = ip.getHostAddress();
+            miVariable = ip.getHostAddress();
         } catch (Exception e) {
-            miIp = "0000000000";
+            miVariable = "0000000000";
         }
-        return miIp;
+        return miVariable;
     }    
 
     public String capturaraFecha(){

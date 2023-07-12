@@ -34,7 +34,7 @@ public class ctl_ambiente {
 
     @PostMapping("/saveAmbiente")
     @ResponseStatus(HttpStatus.CREATED)
-    String saveRecordatorio(@RequestBody mdl_ambiente ambiente) {
+    String saveAmbiente(@RequestBody mdl_ambiente ambiente) {
         String mensaje = "ER|Existe un error interno y no pudo registrarse.";
 
         if (

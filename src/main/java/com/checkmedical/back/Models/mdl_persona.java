@@ -44,7 +44,7 @@ public class mdl_persona {
 
     @Getter @Setter
     @Column(name = "ID_DOCUMENTO")
-    private String tipoDocumento;
+    private int tipoDocumento;
 
     @Getter @Setter
     @Column(name = "NRO_DOCUMENTO")

@@ -1,5 +1,7 @@
 package com.checkmedical.back.Controllers;
 
+
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,12 +16,105 @@ import org.springframework.web.bind.annotation.RestController;
 import com.checkmedical.back.Models.mdl_persona;
 import com.checkmedical.back.services.svc_persona;
 
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import java.io.ByteArrayOutputStream;
+
 @Controller
 @RestController
 public class ctl_persona {
     
 @Autowired
     svc_persona service;
+
+    @PostMapping("/savePersonaMasivo/{idAmbiente}/{idSede}")
+    public ResponseEntity<Boolean> leerExcel(@RequestParam("file") MultipartFile file, @PathVariable int idAmbiente, @PathVariable  int idSede) {
+        try {
+            InputStream inputStream = file.getInputStream();
+            BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+            Workbook workbook = WorkbookFactory.create(bufferedInputStream);
+            Sheet sheet = workbook.getSheetAt(0); // Obtén la primera hoja del libro de trabajo
+            int rowCount = sheet.getPhysicalNumberOfRows(); // Obtiene el número total de filas físicas en la hoja
+
+            // Iterar sobre cada fila y verificar si contiene datos escritos
+            for (int i = 1; i < rowCount; i++) {
+                Row row = sheet.getRow(i);
+                if (row != null && !isEmptyRow(row)) {
+                    mdl_persona persona = new mdl_persona();
+
+                    if (row.getCell(0) != null) {
+                        persona.setId((int) row.getCell(0).getNumericCellValue());
+                    }
+
+                    if (row.getCell(10) != null) {
+                        persona.setPassword(DigestUtils.md5Hex(row.getCell(10).getStringCellValue()));
+                    }
+
+                    persona.setNombres(row.getCell(1).getStringCellValue());
+                    persona.setApellidoPaterno(row.getCell(2).getStringCellValue());
+                    persona.setApellidoMaterno(row.getCell(3).getStringCellValue());
+                    persona.setFechaNacimiento(String.valueOf(row.getCell(4).getLocalDateTimeCellValue().toLocalDate()));
+                    persona.setTipoDocumento((int) row.getCell(5).getNumericCellValue());
+                    persona.setNroDocumento(String.valueOf((int) row.getCell(6).getNumericCellValue()));
+                    persona.setIdPerfil((int) row.getCell(7).getNumericCellValue());
+                    persona.setDireccion(row.getCell(8).getStringCellValue());
+                    persona.setCorreo(row.getCell(9).getStringCellValue());
+                    persona.setIdAmbiente(idAmbiente);
+                    persona.setIdSede(idSede);
+
+                    //Campos de auditoria
+                    persona.setUsuarioRegistra(persona.getId());
+                    persona.setEstado(1);
+                    persona.setIpRegistra(persona.capturarIp());
+
+                    // Asigna otros atributos de la entidad según los datos de las celdas
+                    System.out.println("esta es la persona: "+persona.getId());
+                    System.out.println("esta es la persona: "+persona.getIdAmbiente());
+                    System.out.println("esta es la persona: "+persona.getIdSede());
+                    System.out.println("esta es la persona: "+persona.getNombres());
+                    System.out.println("esta es la persona: "+persona.getApellidoPaterno());
+                    System.out.println("esta es la persona: "+persona.getApellidoMaterno());
+                    System.out.println("esta es la persona: "+persona.getFechaNacimiento());
+                    System.out.println("esta es la persona: "+persona.getTipoDocumento());
+                    System.out.println("esta es la persona: "+persona.getNroDocumento());
+                    System.out.println("esta es la persona: "+persona.getDireccion());
+                    System.out.println("esta es la persona: "+persona.getCorreo());
+                    System.out.println("esta es la persona: "+persona.getPassword());
+
+                    // Registrar persona
+                    service.savePersona(persona);
+                }
+            }
+
+            return ResponseEntity.ok(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.ok(false);
+        }
+    }
+
+    // Método para verificar si una fila está vacía (sin datos escritos)
+    private boolean isEmptyRow(Row row) {
+        for (int i = row.getFirstCellNum(); i < row.getLastCellNum(); i++) {
+            Cell cell = row.getCell(i);
+            if (cell != null && cell.getCellType() != CellType.BLANK) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     @GetMapping("/getPersonas/{id_perfil}/{estado}")
     @ResponseStatus(HttpStatus.CREATED)
@@ -51,7 +146,7 @@ public class ctl_persona {
         if (!persona.getNombres().equals("") && !persona.getNombres().isEmpty() &&
                 !persona.getApellidoPaterno().equals("") && !persona.getApellidoPaterno().isEmpty() &&
                 !persona.getApellidoMaterno().equals("") && !persona.getApellidoMaterno().isEmpty() &&
-                !persona.getTipoDocumento().equals("") && !persona.getTipoDocumento().isEmpty() &&
+                persona.getTipoDocumento() != 0 &&
                 !persona.getNroDocumento().equals("") && !persona.getNroDocumento().isEmpty() &&
                 !persona.getFechaNacimiento().equals("") && !persona.getFechaNacimiento().isEmpty() &&
                 !persona.getCorreo().equals("") && !persona.getCorreo().isEmpty() &&
@@ -102,4 +197,98 @@ public class ctl_persona {
 
         return mensaje;
     }
+
+    //EXPORTAR EXCEL
+    @GetMapping("/exportarPersonas/{idPerfil}/{estados}")
+    public ResponseEntity<byte[]> exportToExcel(@PathVariable int idPerfil, @PathVariable  List<Integer> estados) {
+        // Consulta la entidad utilizando JPA y obtén los datos que deseas exportar
+        List<mdl_persona> personas = service.getPersonasByIdPerfilAndEstadoIn(idPerfil, estados);
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+            // Crea un libro de trabajo de Excel
+            Sheet sheet = workbook.createSheet("Operadores");
+
+            // Crea la fila de encabezado
+            Row headerRow = sheet.createRow(0);
+            headerRow.createCell(0).setCellValue("ID");
+            headerRow.createCell(1).setCellValue("CORREO");
+            headerRow.createCell(2).setCellValue("NOMBRES");
+            headerRow.createCell(3).setCellValue("APELLIDO P.");
+            headerRow.createCell(4).setCellValue("APELLIDO M.");
+            headerRow.createCell(5).setCellValue("T. DOCUMENTO");
+            headerRow.createCell(6).setCellValue("N. DOCUMENTO");
+            headerRow.createCell(7).setCellValue("DIRECCIÓN");
+            headerRow.createCell(8).setCellValue("F. NACIMIENTO");
+            headerRow.createCell(9).setCellValue("ESTADO");
+
+            // Llena las filas con los datos de la entidad
+            int rowNum = 1;
+            for (mdl_persona persona : personas) {
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(persona.getId());
+                row.createCell(1).setCellValue(persona.getCorreo());
+                row.createCell(2).setCellValue(persona.getNombres());
+                row.createCell(3).setCellValue(persona.getApellidoPaterno());
+                row.createCell(4).setCellValue(persona.getApellidoMaterno());
+                row.createCell(5).setCellValue(persona.getTipoDocumento());
+                row.createCell(6).setCellValue(persona.getNroDocumento());
+                row.createCell(7).setCellValue(persona.getDireccion());
+                row.createCell(8).setCellValue(persona.getFechaNacimiento());
+                row.createCell(9).setCellValue(persona.getEstado());
+            }
+
+            // Estilo para la cabecera
+            CellStyle headerStyle = workbook.createCellStyle();
+
+
+            // Establece el color de fondo utilizando un valor RGB
+            int red = 51;
+            int green = 102;
+            int blue = 153;
+            byte[] rgb = new byte[]{(byte) red, (byte) green, (byte) blue};
+            XSSFColor color = new XSSFColor(rgb, null);
+
+            headerStyle.setFillForegroundColor(color);
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setColor(IndexedColors.WHITE.getIndex());
+
+            headerStyle.setFont(headerFont);
+
+            // Aplicar estilo a la cabecera
+            for (int i = 0; i < headerRow.getLastCellNum(); i++) {
+                Cell headerCell = headerRow.getCell(i);
+                headerCell.setCellStyle(headerStyle);
+            }
+
+            // Configura el flujo de salida y el tipo de contenido del archivo
+            try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+                workbook.write(outputStream);
+                byte[] excelBytes = outputStream.toByteArray();
+
+                // Configura la respuesta para descargar el archivo
+                HttpHeaders headers = new HttpHeaders();
+                headers.add("Content-Disposition", "attachment; filename=Operadores.xlsx");
+
+                return ResponseEntity
+                        .status(HttpStatus.OK)
+                        .headers(headers)
+                        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                        .body(excelBytes);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return ResponseEntity
+                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .build();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .build();
+        }
+    }
+
 }
