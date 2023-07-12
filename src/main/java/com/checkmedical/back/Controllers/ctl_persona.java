@@ -1,6 +1,5 @@
 package com.checkmedical.back.Controllers;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,86 +34,9 @@ import java.io.ByteArrayOutputStream;
 @Controller
 @RestController
 public class ctl_persona {
-    
-@Autowired
+
+    @Autowired
     svc_persona service;
-
-    @PostMapping("/savePersonaMasivo/{idAmbiente}/{idSede}")
-    public ResponseEntity<Boolean> leerExcel(@RequestParam("file") MultipartFile file, @PathVariable int idAmbiente, @PathVariable  int idSede) {
-        try {
-            InputStream inputStream = file.getInputStream();
-            BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
-            Workbook workbook = WorkbookFactory.create(bufferedInputStream);
-            Sheet sheet = workbook.getSheetAt(0); // Obtén la primera hoja del libro de trabajo
-            int rowCount = sheet.getPhysicalNumberOfRows(); // Obtiene el número total de filas físicas en la hoja
-
-            // Iterar sobre cada fila y verificar si contiene datos escritos
-            for (int i = 1; i < rowCount; i++) {
-                Row row = sheet.getRow(i);
-                if (row != null && !isEmptyRow(row)) {
-                    mdl_persona persona = new mdl_persona();
-
-                    if (row.getCell(0) != null) {
-                        persona.setId((int) row.getCell(0).getNumericCellValue());
-                    }
-
-                    if (row.getCell(10) != null) {
-                        persona.setPassword(DigestUtils.md5Hex(row.getCell(10).getStringCellValue()));
-                    }
-
-                    persona.setNombres(row.getCell(1).getStringCellValue());
-                    persona.setApellidoPaterno(row.getCell(2).getStringCellValue());
-                    persona.setApellidoMaterno(row.getCell(3).getStringCellValue());
-                    persona.setFechaNacimiento(String.valueOf(row.getCell(4).getLocalDateTimeCellValue().toLocalDate()));
-                    persona.setTipoDocumento((int) row.getCell(5).getNumericCellValue());
-                    persona.setNroDocumento(String.valueOf((int) row.getCell(6).getNumericCellValue()));
-                    persona.setIdPerfil((int) row.getCell(7).getNumericCellValue());
-                    persona.setDireccion(row.getCell(8).getStringCellValue());
-                    persona.setCorreo(row.getCell(9).getStringCellValue());
-                    persona.setIdAmbiente(idAmbiente);
-                    persona.setIdSede(idSede);
-
-                    //Campos de auditoria
-                    persona.setUsuarioRegistra(persona.getId());
-                    persona.setEstado(1);
-                    persona.setIpRegistra(persona.capturarIp());
-
-                    // Asigna otros atributos de la entidad según los datos de las celdas
-                    System.out.println("esta es la persona: "+persona.getId());
-                    System.out.println("esta es la persona: "+persona.getIdAmbiente());
-                    System.out.println("esta es la persona: "+persona.getIdSede());
-                    System.out.println("esta es la persona: "+persona.getNombres());
-                    System.out.println("esta es la persona: "+persona.getApellidoPaterno());
-                    System.out.println("esta es la persona: "+persona.getApellidoMaterno());
-                    System.out.println("esta es la persona: "+persona.getFechaNacimiento());
-                    System.out.println("esta es la persona: "+persona.getTipoDocumento());
-                    System.out.println("esta es la persona: "+persona.getNroDocumento());
-                    System.out.println("esta es la persona: "+persona.getDireccion());
-                    System.out.println("esta es la persona: "+persona.getCorreo());
-                    System.out.println("esta es la persona: "+persona.getPassword());
-
-                    // Registrar persona
-                    service.savePersona(persona);
-                }
-            }
-
-            return ResponseEntity.ok(true);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.ok(false);
-        }
-    }
-
-    // Método para verificar si una fila está vacía (sin datos escritos)
-    private boolean isEmptyRow(Row row) {
-        for (int i = row.getFirstCellNum(); i < row.getLastCellNum(); i++) {
-            Cell cell = row.getCell(i);
-            if (cell != null && cell.getCellType() != CellType.BLANK) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     @GetMapping("/getPersonas/{id_perfil}/{estado}")
     @ResponseStatus(HttpStatus.CREATED)
@@ -198,15 +120,15 @@ public class ctl_persona {
         return mensaje;
     }
 
-    //EXPORTAR EXCEL
+    // EXPORTAR EXCEL
     @GetMapping("/exportarPersonas/{idPerfil}/{estados}")
-    public ResponseEntity<byte[]> exportToExcel(@PathVariable int idPerfil, @PathVariable  List<Integer> estados) {
+    public ResponseEntity<byte[]> exportToExcel(@PathVariable int idPerfil, @PathVariable List<Integer> estados) {
         // Consulta la entidad utilizando JPA y obtén los datos que deseas exportar
         List<mdl_persona> personas = service.getPersonasByIdPerfilAndEstadoIn(idPerfil, estados);
 
         try (Workbook workbook = new XSSFWorkbook()) {
             // Crea un libro de trabajo de Excel
-            Sheet sheet = workbook.createSheet("Operadores");//agregar fecha de descarga
+            Sheet sheet = workbook.createSheet("Operadores");// agregar fecha de descarga
 
             // Crea la fila de encabezado
             Row headerRow = sheet.createRow(0);
@@ -219,7 +141,7 @@ public class ctl_persona {
             headerRow.createCell(6).setCellValue("N. DOCUMENTO");
             headerRow.createCell(7).setCellValue("DIRECCIÓN");
             headerRow.createCell(8).setCellValue("F. NACIMIENTO");
-            headerRow.createCell(9).setCellValue("ESTADO");
+            headerRow.createCell(9).setCellValue("ID ESTADO");
 
             // Llena las filas con los datos de la entidad
             int rowNum = 1;
@@ -238,17 +160,30 @@ public class ctl_persona {
             }
 
             // Estilo para la cabecera
+
+            // Estilo para datos de edicion en la cabecera
+            CellStyle styleheaderEditable = workbook.createCellStyle();
+
+            byte[] styleCabeceraEditable = new byte[] { (byte) 13, (byte) 110, (byte) 253 };
+            XSSFColor colorCabeceraEditable = new XSSFColor(styleCabeceraEditable, null);
+
+            styleheaderEditable.setFillForegroundColor(colorCabeceraEditable);
+            styleheaderEditable.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerRow.getCell(0).setCellStyle(styleheaderEditable);
+
+            Font headerFontEditable = workbook.createFont();
+            headerFontEditable.setBold(true);
+            headerFontEditable.setColor(IndexedColors.WHITE.getIndex());
+
+            styleheaderEditable.setFont(headerFontEditable);
+
+            // Estilo para datos en la cabecera
             CellStyle headerStyle = workbook.createCellStyle();
 
+            byte[] styleCabecera = new byte[] { (byte) 51, (byte) 102, (byte) 153 };
+            XSSFColor colorCabecera = new XSSFColor(styleCabecera, null);
 
-            // Establece el color de fondo utilizando un valor RGB
-            int red = 51;
-            int green = 102;
-            int blue = 153;
-            byte[] rgb = new byte[]{(byte) red, (byte) green, (byte) blue};
-            XSSFColor color = new XSSFColor(rgb, null);
-
-            headerStyle.setFillForegroundColor(color);
+            headerStyle.setFillForegroundColor(colorCabecera);
             headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
             Font headerFont = workbook.createFont();
@@ -258,9 +193,8 @@ public class ctl_persona {
             headerStyle.setFont(headerFont);
 
             // Aplicar estilo a la cabecera
-            for (int i = 0; i < headerRow.getLastCellNum(); i++) {
-                Cell headerCell = headerRow.getCell(i);
-                headerCell.setCellStyle(headerStyle);
+            for (int i = 1; i < headerRow.getLastCellNum(); i++) {
+                headerRow.getCell(i).setCellStyle(headerStyle);
             }
 
             // Configura el flujo de salida y el tipo de contenido del archivo
@@ -291,4 +225,70 @@ public class ctl_persona {
         }
     }
 
+    @PostMapping("/savePersonaMasivo/{idAmbiente}/{idSede}")
+    public ResponseEntity<Boolean> leerExcel(@RequestParam("file") MultipartFile file, @PathVariable int idAmbiente,
+            @PathVariable int idSede) {
+        try {
+            InputStream inputStream = file.getInputStream();
+            BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+            Workbook workbook = WorkbookFactory.create(bufferedInputStream);
+            Sheet sheet = workbook.getSheetAt(0); // Obtén la primera hoja del libro de trabajo
+            int rowCount = sheet.getPhysicalNumberOfRows(); // Obtiene el número total de filas físicas en la hoja
+
+            // Iterar sobre cada fila y verificar si contiene datos escritos
+            for (int i = 1; i < rowCount; i++) {
+                Row row = sheet.getRow(i);
+                if (row != null && !isEmptyRow(row)) {
+                    mdl_persona persona = new mdl_persona();
+
+                    if (row.getCell(0) != null) {
+                        persona.setId((int) row.getCell(0).getNumericCellValue());
+                    }
+
+                    persona.setCorreo(row.getCell(1).getStringCellValue());
+                    persona.setNombres(row.getCell(2).getStringCellValue());
+                    persona.setApellidoPaterno(row.getCell(3).getStringCellValue());
+                    persona.setApellidoMaterno(row.getCell(4).getStringCellValue());
+                    persona.setTipoDocumento((int) row.getCell(5).getNumericCellValue());
+                    persona.setNroDocumento(String.valueOf((int) row.getCell(6).getNumericCellValue()));
+                    persona.setDireccion(row.getCell(7).getStringCellValue());
+                    persona.setFechaNacimiento(
+                            String.valueOf(row.getCell(8).getLocalDateTimeCellValue().toLocalDate()));
+
+                    if (row.getCell(9) != null) {
+                        persona.setPassword(DigestUtils.md5Hex(row.getCell(9).getStringCellValue()));
+                    }
+
+                    persona.setEstado((int) row.getCell(10).getNumericCellValue());
+                    persona.setIdPerfil((int) row.getCell(11).getNumericCellValue());
+
+                    persona.setIdAmbiente(idAmbiente);
+                    persona.setIdSede(idSede);
+
+                    // Campos de auditoria
+                    persona.setUsuarioRegistra(persona.getId());
+                    persona.setIpRegistra(persona.capturarIp());
+
+                    // Registrar persona
+                    service.savePersona(persona);
+                }
+            }
+
+            return ResponseEntity.ok(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.ok(false);
+        }
+    }
+
+    // Método para verificar si una fila está vacía (sin datos escritos)
+    private boolean isEmptyRow(Row row) {
+        for (int i = row.getFirstCellNum(); i < row.getLastCellNum(); i++) {
+            Cell cell = row.getCell(i);
+            if (cell != null && cell.getCellType() != CellType.BLANK) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
