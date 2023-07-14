@@ -251,8 +251,7 @@ public class ctl_persona {
                     persona.setTipoDocumento((int) row.getCell(5).getNumericCellValue());
                     persona.setNroDocumento(String.valueOf((int) row.getCell(6).getNumericCellValue()));
                     persona.setDireccion(row.getCell(7).getStringCellValue());
-                    persona.setFechaNacimiento(
-                            String.valueOf(row.getCell(8).getLocalDateTimeCellValue().toLocalDate()));
+                    persona.setFechaNacimiento(String.valueOf(row.getCell(8).getLocalDateTimeCellValue().toLocalDate()));
 
                     if (row.getCell(9) != null) {
                         persona.setPassword(DigestUtils.md5Hex(row.getCell(9).getStringCellValue()));

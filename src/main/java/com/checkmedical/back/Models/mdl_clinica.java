@@ -39,7 +39,7 @@ public class mdl_clinica {
 
     @Column(name="USUARIO_REGISTRA")
     @Getter @Setter
-    private int uduarioRegistra;
+    private int usuarioRegistra;
 
     @Column(name="USUARIO_MODIFICA")
     @Getter @Setter

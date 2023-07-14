@@ -26,17 +26,17 @@ public class mdl_chequeo_medico {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(name="ID_PERSONA")
+    @Column(name="ID_CITA")
     @Getter @Setter
-    private int idPersona;
+    private int idCita;
 
     @Getter @Setter
     @Column(name = "PDF")
     private String pdf;
 
     @Getter @Setter
-    @Column(name = "RESULTADO")
-    private int resultado;
+    @Column(name = "ESTADO")
+    private int estado;
 
     @Getter @Setter
     @Column(name = "FECHA_EMISION")

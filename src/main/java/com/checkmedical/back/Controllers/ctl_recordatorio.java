@@ -40,7 +40,7 @@ public class ctl_recordatorio {
 
     @GetMapping("/getRecordatorios/{estado}")
     @ResponseStatus(HttpStatus.OK)
-    List<mdl_recordatorio> getRecordatorios(@PathVariable int estado) {
+    List<mdl_recordatorio> getRecordatorios(@PathVariable List<Integer> estado) {
         return service.getRecordatorios(estado);
     }
 
@@ -50,10 +50,10 @@ public class ctl_recordatorio {
         return service.getRecordatorioById(id);
     }
 
-    @GetMapping("/getRecordatorioByIdPersona/{idPersona}")
+    @GetMapping("/getRecordatoriosByIdPersonaAndEstado/{idPersona}/{estado}")
     @ResponseStatus(HttpStatus.OK)
-    List<mdl_recordatorio> getRecordatorioByIdPersona(@PathVariable int idPersona) {
-        return service.getRecordatoriosByIdPersona(idPersona);
+    List<mdl_recordatorio> getRecordatoriosByIdPersonaAndEstado(@PathVariable int idPersona, @PathVariable int estado) {
+        return service.getRecordatoriosByIdPersonaAndEstado(idPersona, estado);
     }
 
     @PostMapping("/saveRecordatorio")
@@ -100,6 +100,24 @@ public class ctl_recordatorio {
         return mensaje;
     }
 
+    @PutMapping("/confirmarRecordatorio")
+    @ResponseStatus(HttpStatus.OK)
+    String confirmarRecordatorio(@RequestBody mdl_recordatorio recordatorio) {
+        String mensaje = "ER|Existe un error interno y no pudo confirmar.";
+        boolean confirmacion = false;
+        if (recordatorio.getId() != 0) {
+            mensaje = "ER|No se pudo confirmar la asistencia.";
+
+            confirmacion = service.confirmarRecordatorio(recordatorio.getId());
+
+            if (confirmacion) {
+                mensaje = "OK|Se confirmo las asistencia.";
+            }
+        }
+
+        return mensaje;
+    }
+
     // EXPORTAR EXCEL
     @GetMapping("/exportarRecordatorios")
     public ResponseEntity<byte[]> exportToExcel() {
@@ -113,11 +131,11 @@ public class ctl_recordatorio {
             // Crea la fila de encabezado
             Row headerRow = sheet.createRow(0);
             headerRow.createCell(0).setCellValue("ID");
-            headerRow.createCell(1).setCellValue("RECORDATORIO");
+            headerRow.createCell(1).setCellValue("F. CITA");
             headerRow.createCell(2).setCellValue("ID PERSONA");
             headerRow.createCell(3).setCellValue("ID CLINICA");
             headerRow.createCell(4).setCellValue("AMBIENTE");
-            headerRow.createCell(5).setCellValue("F. CITA");
+            headerRow.createCell(5).setCellValue("COMENTARIO");
             headerRow.createCell(6).setCellValue("F. INICIO");
             headerRow.createCell(7).setCellValue("F. FINAL");
 
@@ -126,11 +144,11 @@ public class ctl_recordatorio {
             for (mdl_recordatorio recordatorio : recordatorios) {
                 Row row = sheet.createRow(rowNum++);
                 row.createCell(0).setCellValue(recordatorio.getId());
-                row.createCell(1).setCellValue(recordatorio.getRecordatorio());
+                row.createCell(1).setCellValue(recordatorio.getFechaCita());
                 row.createCell(2).setCellValue(recordatorio.getIdPersona());
                 row.createCell(3).setCellValue(recordatorio.getIdClinica());
                 row.createCell(4).setCellValue(recordatorio.getAmbiente());
-                row.createCell(5).setCellValue(recordatorio.getFechaCita());
+                row.createCell(5).setCellValue(recordatorio.getRecordatorio());
                 row.createCell(6).setCellValue(recordatorio.getFechaInicio());
                 row.createCell(7).setCellValue(recordatorio.getFechaFin());
             }
@@ -220,11 +238,11 @@ public class ctl_recordatorio {
                         recordatorio.setId((int) row.getCell(0).getNumericCellValue());
                     }
 
-                    recordatorio.setRecordatorio(row.getCell(1).getStringCellValue());
+                    recordatorio.setFechaCita(row.getCell(1).getLocalDateTimeCellValue().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                     recordatorio.setIdPersona((int) row.getCell(2).getNumericCellValue());
                     recordatorio.setIdClinica((int) row.getCell(3).getNumericCellValue());
                     recordatorio.setAmbiente(row.getCell(4).getStringCellValue());
-                    recordatorio.setFechaCita(row.getCell(5).getLocalDateTimeCellValue().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                    recordatorio.setRecordatorio(row.getCell(5).getStringCellValue());
                     recordatorio.setFechaInicio(String.valueOf(row.getCell(6).getLocalDateTimeCellValue().toLocalDate()));
                     recordatorio.setFechaFin(String.valueOf(row.getCell(7).getLocalDateTimeCellValue().toLocalDate()));
 
