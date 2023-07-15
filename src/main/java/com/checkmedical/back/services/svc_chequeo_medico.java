@@ -16,6 +16,10 @@ public class svc_chequeo_medico {
         return repository.findAll();
     }
 
+    public List<mdl_chequeo_medico> getByIdPersona(int idPersona) {
+        return repository.findAllByIdPersona(idPersona);
+    }
+
     public mdl_chequeo_medico getChequeoMedicoById(int idChequeoMedico) {
         return repository.findById(idChequeoMedico);
     }

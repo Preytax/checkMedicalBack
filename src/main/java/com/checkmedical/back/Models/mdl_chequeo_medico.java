@@ -30,6 +30,10 @@ public class mdl_chequeo_medico {
     @Getter @Setter
     private int idCita;
 
+    @Column(name="ID_PERSONA")
+    @Getter @Setter
+    private int idPersona;
+
     @Getter @Setter
     @Column(name = "PDF")
     private String pdf;

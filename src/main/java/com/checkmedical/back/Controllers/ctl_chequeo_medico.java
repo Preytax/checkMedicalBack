@@ -1,5 +1,6 @@
 package com.checkmedical.back.Controllers;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -11,16 +12,21 @@ import java.nio.file.Path;
 
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
-
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.FileCopyUtils;
-import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -51,6 +57,12 @@ public class ctl_chequeo_medico {
         return service.getChequeoMedicoById(id);
     }
 
+    @GetMapping("/getChequeoMedicoByIdPersona/{idPersona}")
+    @ResponseStatus(HttpStatus.OK)
+    List<mdl_chequeo_medico> getByIdPersona(@PathVariable int idPersona) {
+        return service.getByIdPersona(idPersona);
+    }
+
     @PostMapping("/saveChequeoMedico")
     @ResponseStatus(HttpStatus.CREATED)
     String ChequeoMedico(@RequestBody mdl_chequeo_medico chequeoMedico
@@ -58,6 +70,7 @@ public class ctl_chequeo_medico {
         String mensaje = "ER|Existe un error interno y no pudo registrarse.";
 
         if (
+            chequeoMedico.getIdPersona() != 0 &&
             chequeoMedico.getIdCita() != 0 &&
             !chequeoMedico.getFechaEmision().equals("") &&
             !chequeoMedico.getFechaVencimiento().equals("")
@@ -67,6 +80,11 @@ public class ctl_chequeo_medico {
 
             chequeoMedico.setEstado(1);
             chequeoMedico.setIpRegistra(chequeoMedico.capturarIp());
+
+            System.out.println(chequeoMedico.getIdPersona()); 
+            System.out.println(chequeoMedico.getIdCita()); 
+            System.out.println(chequeoMedico.getFechaEmision()); 
+            System.out.println(chequeoMedico.getFechaVencimiento()); 
 
             try {
                 if (service.saveChequeoMedico(chequeoMedico)) {
@@ -143,6 +161,103 @@ public class ctl_chequeo_medico {
                     .body(resource);
         } else {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    // EXPORTAR EXCEL
+    @GetMapping("/exportarCheuqeosMedicos")
+    public ResponseEntity<byte[]> exportToExcel() {
+        // Consulta la entidad utilizando JPA y obtén los datos que deseas exportar
+        List<mdl_chequeo_medico> clinicas = service.getChequeoMedicos();
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+            // Crea un libro de trabajo de Excel
+            Sheet sheet = workbook.createSheet("Clinicas");// agregar fecha de descarga
+
+            // Crea la fila de encabezado
+            Row headerRow = sheet.createRow(0);
+            headerRow.createCell(0).setCellValue("ID");
+            headerRow.createCell(1).setCellValue("ID CITA");
+            headerRow.createCell(2).setCellValue("ID PERSONA");
+            headerRow.createCell(3).setCellValue("ESTADO");
+            headerRow.createCell(4).setCellValue("F. EMISION");
+            headerRow.createCell(5).setCellValue("F. VENCIMIENTO");
+
+            // Llena las filas con los datos de la entidad
+            int rowNum = 1;
+            for (mdl_chequeo_medico clinica : clinicas) {
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(clinica.getId());
+                row.createCell(1).setCellValue(clinica.getIdCita());
+                row.createCell(2).setCellValue(clinica.getIdPersona());
+                row.createCell(3).setCellValue(clinica.getEstado());
+                row.createCell(4).setCellValue(clinica.getFechaEmision());
+                row.createCell(5).setCellValue(clinica.getFechaVencimiento());
+            }
+
+            // Estilo para la cabecera
+
+            // Estilo para datos de edicion en la cabecera
+            CellStyle styleheaderEditable = workbook.createCellStyle();
+
+            byte[] styleCabeceraEditable = new byte[] { (byte) 13, (byte) 110, (byte) 253 };
+            XSSFColor colorCabeceraEditable = new XSSFColor(styleCabeceraEditable, null);
+
+            styleheaderEditable.setFillForegroundColor(colorCabeceraEditable);
+            styleheaderEditable.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerRow.getCell(0).setCellStyle(styleheaderEditable);
+
+            Font headerFontEditable = workbook.createFont();
+            headerFontEditable.setBold(true);
+            headerFontEditable.setColor(IndexedColors.WHITE.getIndex());
+
+            styleheaderEditable.setFont(headerFontEditable);
+
+            // Estilo para datos en la cabecera
+            CellStyle headerStyle = workbook.createCellStyle();
+
+            byte[] styleCabecera = new byte[] { (byte) 51, (byte) 102, (byte) 153 };
+            XSSFColor colorCabecera = new XSSFColor(styleCabecera, null);
+
+            headerStyle.setFillForegroundColor(colorCabecera);
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setColor(IndexedColors.WHITE.getIndex());
+
+            headerStyle.setFont(headerFont);
+
+            // Aplicar estilo a la cabecera
+            for (int i = 1; i < headerRow.getLastCellNum(); i++) {
+                headerRow.getCell(i).setCellStyle(headerStyle);
+            }
+
+            // Configura el flujo de salida y el tipo de contenido del archivo
+            try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+                workbook.write(outputStream);
+                byte[] excelBytes = outputStream.toByteArray();
+
+                // Configura la respuesta para descargar el archivo
+                HttpHeaders headers = new HttpHeaders();
+                headers.add("Content-Disposition", "attachment; filename=chequemosMedicos.xlsx");
+
+                return ResponseEntity
+                        .status(HttpStatus.OK)
+                        .headers(headers)
+                        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                        .body(excelBytes);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return ResponseEntity
+                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .build();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .build();
         }
     }
 }
