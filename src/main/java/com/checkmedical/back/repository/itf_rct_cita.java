@@ -9,7 +9,7 @@ import com.checkmedical.back.Models.mdl_cita;
 
 public interface itf_rct_cita extends CrudRepository <mdl_cita, Integer>{
     
-    //Recordatorios
+    //Recordatorios 
     public List<mdl_cita> findAll();
 
     // Personas por correo
