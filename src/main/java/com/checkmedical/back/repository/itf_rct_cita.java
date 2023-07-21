@@ -23,11 +23,11 @@ public interface itf_rct_cita extends CrudRepository <mdl_cita, Integer>{
 
     // Eliminar recordatorio
     @Modifying
-    @Query("UPDATE mdl_recordatorio t SET t.estado = 2 WHERE t.id = :id")
+    @Query("UPDATE mdl_cita t SET t.estado = 2 WHERE t.id = :id")
     public void eliminarRecordatorio(int id);
 
     // Eliminar recordatorio
     @Modifying
-    @Query("UPDATE mdl_recordatorio t SET t.estado = 4 WHERE t.id = :id")
+    @Query("UPDATE mdl_cita t SET t.estado = 4 WHERE t.id = :id")
     public void confirmarRecordatorio(int id);
 }
