@@ -20,6 +20,10 @@ public class svc_ambiente {
         return repository.findById(idActividad);
     }
 
+    public mdl_ambiente getByAmbiente(String ambiente) {
+        return repository.findByAmbiente(ambiente);
+    }
+
     public Boolean saveAmbiente(mdl_ambiente ambiente) {
         try {
             repository.save(ambiente);

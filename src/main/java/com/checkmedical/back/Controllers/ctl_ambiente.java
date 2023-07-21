@@ -43,6 +43,13 @@ public class ctl_ambiente {
         {
             mensaje = "ER|No se pudo registrar el ambiente.";
 
+            mdl_ambiente ambienteTemporal = new mdl_ambiente();
+            ambienteTemporal = service.getByAmbiente(ambiente.getAmbiente());
+            
+            if(ambienteTemporal == ambiente){
+                return "ER|El ambiente ya existe.";
+            }
+
             ambiente.setEstado(1);
             ambiente.setIpRegistra(ambiente.capturarIp());
 

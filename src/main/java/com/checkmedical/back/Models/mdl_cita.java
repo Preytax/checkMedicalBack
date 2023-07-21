@@ -18,7 +18,7 @@ import lombok.Setter;
 @Table(name= "ckm_recordatorios")
 @AllArgsConstructor
 @NoArgsConstructor
-public class mdl_recordatorio {
+public class mdl_cita {
     
     @Id
     @Column(name="ID")
@@ -45,14 +45,6 @@ public class mdl_recordatorio {
     @Getter @Setter
     @Column(name = "FECHA_CITA")
     private String fechaCita;
-
-    @Getter @Setter
-    @Column(name = "FECHA_INICIO")
-    private String fechaInicio;
-
-    @Getter @Setter
-    @Column(name = "FECHA_FIN")
-    private String fechaFin;
 
     @Getter @Setter
     @Column(name = "ESTADO")

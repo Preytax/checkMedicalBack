@@ -4,30 +4,30 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.checkmedical.back.Models.mdl_recordatorio;
-import com.checkmedical.back.repository.itf_rct_recordatorio;
+import com.checkmedical.back.Models.mdl_cita;
+import com.checkmedical.back.repository.itf_rct_cita;
 
 import jakarta.transaction.Transactional;
 
 @Service
-public class svc_recordatorio {
+public class svc_cita {
     
     @Autowired
-    itf_rct_recordatorio repository;
+    itf_rct_cita repository;
 
-    public List<mdl_recordatorio> getRecordatorios() {
+    public List<mdl_cita> getRecordatorios() {
         return repository.findAll();
     }
 
-    public List<mdl_recordatorio> getRecordatorios(List<Integer> estado) {
+    public List<mdl_cita> getRecordatorios(List<Integer> estado) {
         return repository.findAllByEstadoIn(estado);
     }
     
-    public mdl_recordatorio getRecordatorioById(int id) {
+    public mdl_cita getRecordatorioById(int id) {
         return repository.findById(id);
     }
 
-    public List<mdl_recordatorio> getRecordatoriosByIdPersonaAndEstado(int idPersona, int estado) {
+    public List<mdl_cita> getRecordatoriosByIdPersonaAndEstado(int idPersona, int estado) {
         return repository.findAllByIdPersonaAndEstado(idPersona, estado);
     }
 
@@ -43,7 +43,7 @@ public class svc_recordatorio {
         return true;
     }
 
-    public Boolean saveRecordatorio(mdl_recordatorio request) {
+    public Boolean saveRecordatorio(mdl_cita request) {
         try {
             repository.save(request);
             return true;

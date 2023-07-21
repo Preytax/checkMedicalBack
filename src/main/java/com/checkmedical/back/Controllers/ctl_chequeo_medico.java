@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -37,13 +38,19 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.checkmedical.back.Models.mdl_chequeo_medico;
+import com.checkmedical.back.Models.mdl_cita;
 import com.checkmedical.back.services.svc_chequeo_medico;
+import com.checkmedical.back.services.svc_cita;
 
 @Controller
 @RestController
 public class ctl_chequeo_medico {
+    
     @Autowired
     svc_chequeo_medico service;
+
+    @Autowired
+    svc_cita serviceCita;
     
     @GetMapping("/getChequeoMedicos")
     @ResponseStatus(HttpStatus.OK)
@@ -78,13 +85,24 @@ public class ctl_chequeo_medico {
         {
             mensaje = "ER|No se pudo registrar el chequeo medico.";
 
+            //Validar existencia del trabajador
+            mdl_cita clinica = new mdl_cita();
+            mdl_cita clinicaTemporal = new mdl_cita();
+            int idClinica = chequeoMedico.getIdCita();
+
+            clinicaTemporal = serviceCita.getRecordatorioById(idClinica);
+
+            if(clinicaTemporal == clinica){
+                mensaje = "ER|La clinica no existe.";
+            }
+
+            //Validar mes y año
+            if (!isCurrentDate(chequeoMedico.getFechaEmision())) {
+                return "ER|La fecha " + chequeoMedico.getFechaEmision() + " ya no es valida.";
+            }
+
             chequeoMedico.setEstado(1);
             chequeoMedico.setIpRegistra(chequeoMedico.capturarIp());
-
-            System.out.println(chequeoMedico.getIdPersona()); 
-            System.out.println(chequeoMedico.getIdCita()); 
-            System.out.println(chequeoMedico.getFechaEmision()); 
-            System.out.println(chequeoMedico.getFechaVencimiento()); 
 
             try {
                 if (service.saveChequeoMedico(chequeoMedico)) {
@@ -97,6 +115,13 @@ public class ctl_chequeo_medico {
         }
 
         return mensaje;
+    }
+
+    public static boolean isCurrentDate(String fechaToValidate) {
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+        LocalDate currentDate = LocalDate.now();
+        LocalDate fecha = LocalDate.parse(fechaToValidate, dateFormatter);
+        return currentDate.equals(fecha);
     }
 
     @PostMapping(value = "/savePDFChequeoMedico/{idCita}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

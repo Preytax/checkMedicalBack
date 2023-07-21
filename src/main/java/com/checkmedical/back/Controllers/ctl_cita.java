@@ -4,7 +4,9 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.poi.ss.usermodel.*;
@@ -28,43 +30,51 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.checkmedical.back.Models.mdl_recordatorio;
-import com.checkmedical.back.services.svc_recordatorio;
+import com.checkmedical.back.Models.mdl_cita;
+import com.checkmedical.back.Models.mdl_clinica;
+import com.checkmedical.back.Models.mdl_persona;
+import com.checkmedical.back.services.svc_cita;
+import com.checkmedical.back.services.svc_clinica;
+import com.checkmedical.back.services.svc_persona;
 
 @Controller
 @RestController
-public class ctl_recordatorio {
+public class ctl_cita {
     
     @Autowired
-    svc_recordatorio service;
+    svc_cita service;
+
+    @Autowired
+    svc_persona servicePersona;
+
+    @Autowired
+    svc_clinica serviceClinica;
 
     @GetMapping("/getRecordatorios/{estado}")
     @ResponseStatus(HttpStatus.OK)
-    List<mdl_recordatorio> getRecordatorios(@PathVariable List<Integer> estado) {
+    List<mdl_cita> getRecordatorios(@PathVariable List<Integer> estado) {
         return service.getRecordatorios(estado);
     }
 
     @GetMapping("/getRecordatorioById/{id}")
     @ResponseStatus(HttpStatus.OK)
-    mdl_recordatorio getRecordatorio(@PathVariable int id) {
+    mdl_cita getRecordatorio(@PathVariable int id) {
         return service.getRecordatorioById(id);
     }
 
     @GetMapping("/getRecordatoriosByIdPersonaAndEstado/{idPersona}/{estado}")
     @ResponseStatus(HttpStatus.OK)
-    List<mdl_recordatorio> getRecordatoriosByIdPersonaAndEstado(@PathVariable int idPersona, @PathVariable int estado) {
+    List<mdl_cita> getRecordatoriosByIdPersonaAndEstado(@PathVariable int idPersona, @PathVariable int estado) {
         return service.getRecordatoriosByIdPersonaAndEstado(idPersona, estado);
     }
 
     @PostMapping("/saveRecordatorio")
     @ResponseStatus(HttpStatus.CREATED)
-    String saveRecordatorio(@RequestBody mdl_recordatorio recordatorio) {
+    String saveRecordatorio(@RequestBody mdl_cita recordatorio) {
         String mensaje = "ER|Existe un error interno y no pudo registrarse.";
 
         if (
             recordatorio.getIdClinica() != 0 &&
-            !recordatorio.getFechaInicio().equals("") &&
-            !recordatorio.getFechaFin().equals("") &&
             recordatorio.getIdPersona() != 0
             ) 
         {
@@ -84,7 +94,7 @@ public class ctl_recordatorio {
 
     @PutMapping("/eliminarRecordatorio")
     @ResponseStatus(HttpStatus.OK)
-    String EliminarRecordatorio(@RequestBody mdl_recordatorio recordatorio) {
+    String EliminarRecordatorio(@RequestBody mdl_cita recordatorio) {
         String mensaje = "ER|Existe un error interno y no pudo eliminar.";
         boolean confirmacion = false;
         if (recordatorio.getId() != 0) {
@@ -102,7 +112,7 @@ public class ctl_recordatorio {
 
     @PutMapping("/confirmarRecordatorio")
     @ResponseStatus(HttpStatus.OK)
-    String confirmarRecordatorio(@RequestBody mdl_recordatorio recordatorio) {
+    String confirmarRecordatorio(@RequestBody mdl_cita recordatorio) {
         String mensaje = "ER|Existe un error interno y no pudo confirmar.";
         boolean confirmacion = false;
         if (recordatorio.getId() != 0) {
@@ -122,7 +132,7 @@ public class ctl_recordatorio {
     @GetMapping("/exportarRecordatorios")
     public ResponseEntity<byte[]> exportToExcel() {
         // Consulta la entidad utilizando JPA y obtén los datos que deseas exportar
-        List<mdl_recordatorio> recordatorios = service.getRecordatorios();
+        List<mdl_cita> recordatorios = service.getRecordatorios();
 
         try (Workbook workbook = new XSSFWorkbook()) {
             // Crea un libro de trabajo de Excel
@@ -141,7 +151,7 @@ public class ctl_recordatorio {
 
             // Llena las filas con los datos de la entidad
             int rowNum = 1;
-            for (mdl_recordatorio recordatorio : recordatorios) {
+            for (mdl_cita recordatorio : recordatorios) {
                 Row row = sheet.createRow(rowNum++);
                 row.createCell(0).setCellValue(recordatorio.getId());
                 row.createCell(1).setCellValue(recordatorio.getFechaCita());
@@ -149,8 +159,6 @@ public class ctl_recordatorio {
                 row.createCell(3).setCellValue(recordatorio.getIdClinica());
                 row.createCell(4).setCellValue(recordatorio.getAmbiente());
                 row.createCell(5).setCellValue(recordatorio.getRecordatorio());
-                row.createCell(6).setCellValue(recordatorio.getFechaInicio());
-                row.createCell(7).setCellValue(recordatorio.getFechaFin());
             }
 
             // Estilo para la cabecera
@@ -232,27 +240,66 @@ public class ctl_recordatorio {
             for (int i = 1; i < rowCount; i++) {
                 Row row = sheet.getRow(i);
                 if (row != null && !isEmptyRow(row)) {
-                    mdl_recordatorio recordatorio = new mdl_recordatorio();
+                    mdl_cita cita = new mdl_cita();
 
                     if (row.getCell(0) != null) {
-                        recordatorio.setId((int) row.getCell(0).getNumericCellValue());
+                        cita.setId((int) row.getCell(0).getNumericCellValue());
+
+                        mdl_cita citaTemporal = new mdl_cita();
+                        citaTemporal = service.getRecordatorioById((int) row.getCell(0).getNumericCellValue());
+                        if(citaTemporal == cita){
+                            return ResponseEntity.ok(false);
+                        } else {
+                            cita.setId((int) row.getCell(0).getNumericCellValue());
+                        }
                     }
 
-                    recordatorio.setFechaCita(row.getCell(1).getLocalDateTimeCellValue().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-                    recordatorio.setIdPersona((int) row.getCell(2).getNumericCellValue());
-                    recordatorio.setIdClinica((int) row.getCell(3).getNumericCellValue());
-                    recordatorio.setAmbiente(row.getCell(4).getStringCellValue());
-                    recordatorio.setRecordatorio(row.getCell(5).getStringCellValue());
-                    recordatorio.setFechaInicio(String.valueOf(row.getCell(6).getLocalDateTimeCellValue().toLocalDate()));
-                    recordatorio.setFechaFin(String.valueOf(row.getCell(7).getLocalDateTimeCellValue().toLocalDate()));
+                    //Comprovacion de fecha de cita
+                    Date fechaactual = new Date(System.currentTimeMillis());
+                    String fechaCita = row.getCell(1).getLocalDateTimeCellValue().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+
+                    SimpleDateFormat date = new SimpleDateFormat("yyyy-MM-dd");
+                    Date fechaInicioDate = date.parse(fechaCita);
+
+                    if(!fechaInicioDate.after(fechaactual)) {
+                        return ResponseEntity.ok(false);
+                    }
+
+                    //Validar existencia del trabajador
+                    mdl_persona persona = new mdl_persona();
+                    mdl_persona personaTemporal = new mdl_persona();
+                    int idPersona = (int) row.getCell(2).getNumericCellValue();
+
+                    personaTemporal = servicePersona.getPersonaById(idPersona);
+
+                    if(personaTemporal == persona){
+                        return ResponseEntity.ok(false);
+                    }
+
+                    //Validar existencia del trabajador
+                    mdl_clinica clinica = new mdl_clinica();
+                    mdl_clinica clinicaTemporal = new mdl_clinica();
+                    int idClinica = (int) row.getCell(2).getNumericCellValue();
+
+                    clinicaTemporal = serviceClinica.getClinicaById(idClinica);
+
+                    if(clinicaTemporal == clinica){
+                        return ResponseEntity.ok(false);
+                    }
+
+                    cita.setFechaCita(fechaCita);
+                    cita.setIdPersona(idPersona);
+                    cita.setIdClinica((int) row.getCell(3).getNumericCellValue());
+                    cita.setAmbiente(row.getCell(4).getStringCellValue());
+                    cita.setRecordatorio(row.getCell(5).getStringCellValue());
 
                     //Campos de auditoria
-                    recordatorio.setUsuarioRegistra(recordatorio.getId());
-                    recordatorio.setEstado(1);
-                    recordatorio.setIpRegistra(recordatorio.capturarIp());
+                    cita.setUsuarioRegistra(cita.getId());
+                    cita.setEstado(1);
+                    cita.setIpRegistra(cita.capturarIp());
                     
                     // Registrar recordatorio
-                    service.saveRecordatorio(recordatorio);
+                    service.saveRecordatorio(cita);
                 }
             }
 

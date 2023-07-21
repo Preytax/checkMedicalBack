@@ -11,4 +11,7 @@ public interface itf_rct_ambiente extends CrudRepository <mdl_ambiente, Integer>
     
     //Ambiente por id
     public mdl_ambiente findById(int id);
+
+    //Ambiente por nombre
+    public mdl_ambiente findByAmbiente(String ambiente);
 }

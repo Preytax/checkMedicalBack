@@ -74,14 +74,13 @@ public class ctl_persona {
                 !persona.getPassword().equals("") && !persona.getPassword().isEmpty()) {
             mensaje = "ER|No se pudo registrar a la persona.";
 
-            /*
-             * if(service.confirmarCorreo(persona.getCorreo()) == false){
-             * return "ER|El correo ya esta registrado.";
-             * }
-             * else if(service.confirmarNroDocumento(persona.getNroDocumento()) == false){
-             * return "ER|El Nro de docuemento ya esta registrado.";
-             * }
-             */
+            if(service.confirmarCorreo(persona.getCorreo()) == true){
+                 return "ER|El correo ya esta registrado.";
+            }
+            
+            if(service.confirmarNroDocumento(persona.getNroDocumento()) == true){
+                return "ER|El Nro de docuemento ya esta registrado.";
+            }
 
             persona.setUsuarioRegistra(persona.getId());
             persona.setEstado(1);
@@ -240,14 +239,41 @@ public class ctl_persona {
                     mdl_persona persona = new mdl_persona();
 
                     if (row.getCell(0) != null) {
-                        persona.setId((int) row.getCell(0).getNumericCellValue());
+                        mdl_persona personaTemporal = new mdl_persona();
+                        personaTemporal = service.getPersonaById((int) row.getCell(0).getNumericCellValue());
+                        if(personaTemporal == persona){
+                            return ResponseEntity.ok(false);
+                        } else {
+                            persona.setId((int) row.getCell(0).getNumericCellValue());
+                        }
+                    } else {
+                        if(service.confirmarCorreo(row.getCell(1).getStringCellValue()) == true){
+                            return ResponseEntity.ok(false);
+                        }
+                        
+                        if(service.confirmarNroDocumento(String.valueOf((int) row.getCell(6).getNumericCellValue())) == true){
+                            return ResponseEntity.ok(false);
+                        }
                     }
+                    //FALTA VALIDAR EL DNI Y CORREO CUANDO LA PERSONA YA ESTA REGISTRADA
+
+                    //Validacion de existencia de estado
+                    int estadoExcel = (int) row.getCell(10).getNumericCellValue();
+                    if(estadoExcel != 0 && estadoExcel != 1 && estadoExcel != 2){
+                        return ResponseEntity.ok(false);
+                    }
+
+                    int tipoDocumentoExcel = (int) row.getCell(5).getNumericCellValue();
+                    if(tipoDocumentoExcel != 1){
+                        return ResponseEntity.ok(false);
+                    }
+
 
                     persona.setCorreo(row.getCell(1).getStringCellValue());
                     persona.setNombres(row.getCell(2).getStringCellValue());
                     persona.setApellidoPaterno(row.getCell(3).getStringCellValue());
                     persona.setApellidoMaterno(row.getCell(4).getStringCellValue());
-                    persona.setTipoDocumento((int) row.getCell(5).getNumericCellValue());
+                    persona.setTipoDocumento(tipoDocumentoExcel);
                     persona.setNroDocumento(String.valueOf((int) row.getCell(6).getNumericCellValue()));
                     persona.setDireccion(row.getCell(7).getStringCellValue());
                     persona.setFechaNacimiento(String.valueOf(row.getCell(8).getLocalDateTimeCellValue().toLocalDate()));
@@ -256,7 +282,7 @@ public class ctl_persona {
                         persona.setPassword(DigestUtils.md5Hex(row.getCell(9).getStringCellValue()));
                     }
 
-                    persona.setEstado((int) row.getCell(10).getNumericCellValue());
+                    persona.setEstado(estadoExcel);
                     persona.setIdPerfil((int) row.getCell(11).getNumericCellValue());
 
                     persona.setIdAmbiente(idAmbiente);

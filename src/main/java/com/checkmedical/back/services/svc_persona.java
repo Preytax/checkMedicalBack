@@ -74,7 +74,7 @@ public class svc_persona {
         return repository.findByNroDocumento(correo);
     }
 
-    public boolean confirmarCorreo(String  dni) {
+    public boolean confirmarCorreo(String dni) {
         return repository.findByCorreo(dni);
     }
 }

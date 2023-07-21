@@ -5,21 +5,21 @@ import java.util.List;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import com.checkmedical.back.Models.mdl_recordatorio;
+import com.checkmedical.back.Models.mdl_cita;
 
-public interface itf_rct_recordatorio extends CrudRepository <mdl_recordatorio, Integer>{
+public interface itf_rct_cita extends CrudRepository <mdl_cita, Integer>{
     
     //Recordatorios
-    public List<mdl_recordatorio> findAll();
+    public List<mdl_cita> findAll();
 
     // Personas por correo
-    public List<mdl_recordatorio> findAllByEstadoIn(List<Integer> estado);
+    public List<mdl_cita> findAllByEstadoIn(List<Integer> estado);
     
     //Recordatorio por id
-    public mdl_recordatorio findById(int id);
+    public mdl_cita findById(int id);
 
     //Recordatorios por persona
-    public List<mdl_recordatorio> findAllByIdPersonaAndEstado(int idPersona, int estado);
+    public List<mdl_cita> findAllByIdPersonaAndEstado(int idPersona, int estado);
 
     // Eliminar recordatorio
     @Modifying
